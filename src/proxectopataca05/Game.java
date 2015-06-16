@@ -3,7 +3,6 @@ package proxectopataca05;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
-import java.awt.Image;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.util.ArrayList;
@@ -46,10 +45,14 @@ public class Game extends JPanel implements KeyListener, Runnable {
     private final ArrayList <Pataca> patacas;
     
     private boolean running;
-    private final int speed;
+    private int speed;
     private final int tileSize;
     private int score = 0;
+    
+    private int patacaEat = 0;
+    
     private boolean pause = false;
+    private boolean changed = true;
     
     public Game(Config data){
         setFocusable(true);
@@ -91,7 +94,7 @@ public class Game extends JPanel implements KeyListener, Runnable {
              * Generate Potato if ArrayList is empty
              */
             if(patacas.isEmpty()){
-                boolean valide = false;
+                boolean valide = true;
                 
                 int xPataca = 0;
                 int yPataca = 0;
@@ -100,13 +103,13 @@ public class Game extends JPanel implements KeyListener, Runnable {
                     xPataca = rnd.nextInt((widthPanel/tileSize)-1);
                     yPataca = rnd.nextInt((heightPanel/tileSize)-1);
                     
-                    valide = false;
+                    valide = true;
                     for(int i=0; i<sachador.size(); i++){
                         if(xPataca == sachador.get(i).getxCoor() && yPataca == sachador.get(i).getyCoor()){
-                            valide = true;
+                            valide = false;
                         }
                     }
-                }while(valide);
+                }while(!valide);
                 
                 potato = new Pataca(xPataca, yPataca);
                 patacas.add(potato);
@@ -122,6 +125,10 @@ public class Game extends JPanel implements KeyListener, Runnable {
                     i--;
                     score += 150;
                     manolo.setPataca(true);
+                    
+                    patacaEat++;
+                    int incre = (int) (patacaEat*0.2);
+                    speed -= incre;
                 }
             }
             
@@ -152,6 +159,7 @@ public class Game extends JPanel implements KeyListener, Runnable {
             if(down){
                 yCoord++;
             }
+            changed = true;
             
             /**
              * generate new manolo in the actualized coords
@@ -205,23 +213,23 @@ public class Game extends JPanel implements KeyListener, Runnable {
         g.setColor(Color.WHITE);
         g.drawString("Score: " + score, 5, heightPanel + 17);
         
+        g.setColor(Color.BLACK);
         for (Sachador sachador1 : sachador) {
             
             if(!sachador1.isPataca()){
-                g.setColor(Color.BLACK);
                 g.fillRect(sachador1.getxCoor()*tileSize+1, 
                         sachador1.getyCoor()*tileSize+1, tileSize-2, tileSize-2);
             }
             if(sachador1.isPataca()){
-                g.setColor(Color.BLACK);
                 g.fillRect(sachador1.getxCoor()*tileSize, 
                         sachador1.getyCoor()*tileSize, tileSize, tileSize);
             }
         }
         
+        g.setColor(Color.YELLOW);
         for (Pataca pataca : patacas) {
-            g.setColor(Color.YELLOW);
-            g.fillRect(pataca.getxCoor()*10, pataca.getyCoor()*10, 10, 10);
+            g.fillRect(pataca.getxCoor()*tileSize, pataca.getyCoor()*tileSize, 
+                    tileSize, tileSize);
         }
     }
     
@@ -243,31 +251,38 @@ public class Game extends JPanel implements KeyListener, Runnable {
         }
     }
     
-
     @Override
     public void keyPressed(KeyEvent e) {
-        if ( (e.getKeyChar() == 'd' || e.getKeyCode() == KeyEvent.VK_RIGHT ) && !left && !pause ) {
+        if ( (e.getKeyChar() == 'd' || e.getKeyCode() == KeyEvent.VK_RIGHT ) && !left && !pause && changed ) {
             up = false;
             down = false;
             right = true;
+            
+            changed = false;
         }
 
-        if ( (e.getKeyChar() == 'a' || e.getKeyCode() == KeyEvent.VK_LEFT ) && !right && !pause ) {
+        if ( (e.getKeyChar() == 'a' || e.getKeyCode() == KeyEvent.VK_LEFT ) && !right && !pause && changed ) {
             up = false;
             down = false;
             left = true;
+            
+            changed = false;
         }
 
-        if ( (e.getKeyChar() == 'w' || e.getKeyCode() == KeyEvent.VK_UP ) && !down && !pause ) {
+        if ( (e.getKeyChar() == 'w' || e.getKeyCode() == KeyEvent.VK_UP ) && !down && !pause && changed ) {
             left = false;
             right = false;
             up = true;
+            
+            changed = false;
         }
 
-        if ( (e.getKeyChar() == 's' || e.getKeyCode() == KeyEvent.VK_DOWN ) && !up && !pause ) {
+        if ( (e.getKeyChar() == 's' || e.getKeyCode() == KeyEvent.VK_DOWN ) && !up && !pause && changed ) {
             left = false;
             right = false;
             down = true;
+            
+            changed = false;
         }
         
         if( e.getKeyCode() == KeyEvent.VK_SPACE ){

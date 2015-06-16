@@ -8,7 +8,7 @@ package proxectopataca05;
  */
 public class Config {
     
-    private int speed = 100;
+    private int speed = 50;
     
     private int width = 500, height = 500;
 
