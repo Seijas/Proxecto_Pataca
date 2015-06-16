@@ -39,8 +39,6 @@ public class ScoreOne extends javax.swing.JDialog implements KeyListener {
         jComboBox1.setEnabled(false);
         jComboBox1.setSelectedIndex(data.getIntDificulty());
         
-        //jTextField1.setFocusable(true);
-        
         setFocusable(true);
         addKeyListener(this);
         setLocation(250, 150);
@@ -185,6 +183,9 @@ public class ScoreOne extends javax.swing.JDialog implements KeyListener {
     private void insertScore(){
         if(!saved){
             String nick = jTextField1.getText();
+            if(nick.equals("")){
+                nick = "Desconocido";
+            }
             String sql = "insert into score (score,nick,dificulty) values(" + data1.getScore() + ", '" + nick + "', '" + data1.getDificulty() + "')";
             connect.saveScore(sql);
             this.cleanTable();

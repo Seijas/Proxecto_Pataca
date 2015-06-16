@@ -190,11 +190,13 @@ public class Windows extends JFrame {
     }
     private void reStartGameActionPerformed(ActionEvent evt){
         if(game != null){
+            data.setRunning(false);
             game.setVisible(false);
             remove(game);
             game = null;
         }
         game = new Game(data);
+        data.setRunning(true);
         addKeyListener(game);
         add(game).setBounds(0, 0, 500, 500);
         pack();
@@ -203,6 +205,7 @@ public class Windows extends JFrame {
         if(game == null){
             System.exit(0);
         }else{
+            data.setRunning(false);
             game.setVisible(false);
             remove(game);
             game = null;

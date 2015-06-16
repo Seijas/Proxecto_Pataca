@@ -8,7 +8,6 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.util.ArrayList;
 import java.util.Random;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 /**
@@ -21,7 +20,7 @@ public class Game extends JPanel implements KeyListener, Runnable {
     
     private final Random rnd = new Random();
     
-    Config data;
+    private Config data;
     
     private final Thread thread;
     
@@ -46,10 +45,11 @@ public class Game extends JPanel implements KeyListener, Runnable {
     private Pataca potato;
     private final ArrayList <Pataca> patacas;
     
-    private boolean running = false;
+    private boolean running;
     private final int speed;
     private final int tileSize;
-    private int patacaEat = 0;
+    private int score = 0;
+    private boolean pause = false;
     
     public Game(Config data){
         setFocusable(true);
@@ -67,17 +67,12 @@ public class Game extends JPanel implements KeyListener, Runnable {
         widthScore = data.getWidthtScore();
         heightScore = data.getHeightScore();
         
-        //scor = new JLabel("Score: 0");
-        //scor.setForeground(Color.BLACK);
-        //add(scor).setBounds(5, widthPanel, widthScore, heightScore);
-        
         setPreferredSize(new Dimension(widthPanel, heightPanel+heightScore));
-        
         
         patacas = new ArrayList<>();
         sachador = new ArrayList<>();
         
-        running = true;
+        running = data.isRunning();
         thread = new Thread(this, "Game loop");
         thread.start();
     }
@@ -85,14 +80,12 @@ public class Game extends JPanel implements KeyListener, Runnable {
     @Override
     public void run() {
         
-        manolo = new Sachador(xCoord-2, yCoord);
-        sachador.add(manolo);
-        manolo = new Sachador(xCoord-1, yCoord);
-        sachador.add(manolo);
-        manolo = new Sachador(xCoord, yCoord);
-        sachador.add(manolo);
+        for(int i=sizeManolo; i>0; i--){
+            manolo = new Sachador(xCoord, yCoord-i);
+            sachador.add(manolo);
+        }
         
-        while(running){
+        while(data.isRunning()){
             
             /**
              * Generate Potato if ArrayList is empty
@@ -125,10 +118,9 @@ public class Game extends JPanel implements KeyListener, Runnable {
             for(int i=0; i<patacas.size(); i++){
                 if(manolo.getxCoor() == patacas.get(i).getxCoor() && 
                         manolo.getyCoor() == patacas.get(i).getyCoor()){
-                    //sizeManolo++;
                     patacas.remove(i);
                     i--;
-                    patacaEat++;
+                    score += 150;
                     manolo.setPataca(true);
                 }
             }
@@ -161,27 +153,22 @@ public class Game extends JPanel implements KeyListener, Runnable {
                 yCoord++;
             }
             
-            
             /**
              * generate new manolo in the actualized coords
              */
             manolo = new Sachador(xCoord, yCoord);
             sachador.add(manolo);
             
-            
             /**
-             * if manolo no eat a potato, lose him last part
+             * if the last manolo has been eat a potato, 
+             * them manolos plus one manolo an the las manolo turn no potato eat
              */
-            //if(sachador.size() > sizeManolo){
-            //    sachador.remove(0);
-            //}
             if(sachador.get(0).isPataca()){
                 sizeManolo++;
                 sachador.get(0).setPataca(false);
             }else{
                 sachador.remove(0);
             }
-            
             
             /**
              * if manolo cross the limits, runnig stop
@@ -191,20 +178,19 @@ public class Game extends JPanel implements KeyListener, Runnable {
                     yCoord < 0 || yCoord > data.getHeight()/tileSize-1){
                 stop();
             }else{
-                
                 repaint();
             }
             
             try{
                 thread.sleep(speed);
+                while(pause && data.isRunning()){
+                    thread.sleep(10);
+                }
             }catch(InterruptedException e){
                 
             }
         }
     }
-    
-    
-    Image img;
     
     @Override
     public void paint(Graphics g){
@@ -217,35 +203,32 @@ public class Game extends JPanel implements KeyListener, Runnable {
         g.fillRect(0, widthPanel, widthScore, heightScore);
         
         g.setColor(Color.WHITE);
-        g.drawString("Score: " + patacaEat * 150, 5, heightPanel + 17);
+        g.drawString("Score: " + score, 5, heightPanel + 17);
         
         for (Sachador sachador1 : sachador) {
+            
             if(!sachador1.isPataca()){
                 g.setColor(Color.BLACK);
-                g.fillRect(sachador1.getxCoor()*tileSize+1, sachador1.getyCoor()*tileSize+1, 8, 8);
+                g.fillRect(sachador1.getxCoor()*tileSize+1, 
+                        sachador1.getyCoor()*tileSize+1, tileSize-2, tileSize-2);
             }
             if(sachador1.isPataca()){
                 g.setColor(Color.BLACK);
-                g.fillRect(sachador1.getxCoor()*tileSize, sachador1.getyCoor()*tileSize, 10, 10);
+                g.fillRect(sachador1.getxCoor()*tileSize, 
+                        sachador1.getyCoor()*tileSize, tileSize, tileSize);
             }
         }
         
         for (Pataca pataca : patacas) {
-            
             g.setColor(Color.YELLOW);
             g.fillRect(pataca.getxCoor()*10, pataca.getyCoor()*10, 10, 10);
-            
-            //img = getToolkit().getImage("images/prueba.jpg");
-            //g.drawImage(img, pataca.getxCoor()*10, pataca.getyCoor()*10, 10, 10, this);
-            
         }
     }
     
     public void stop(){
+        data.setRunning(false);
         
-        running = false;
-        
-        data.setScore(patacaEat * 150);
+        data.setScore(score);
         
         ScoreOne dialog = new ScoreOne(new javax.swing.JFrame(), true, data);
         addKeyListener(dialog);
@@ -263,28 +246,32 @@ public class Game extends JPanel implements KeyListener, Runnable {
 
     @Override
     public void keyPressed(KeyEvent e) {
-        if ( (e.getKeyChar() == 'd' || e.getKeyCode() == KeyEvent.VK_RIGHT ) && !left) {
+        if ( (e.getKeyChar() == 'd' || e.getKeyCode() == KeyEvent.VK_RIGHT ) && !left && !pause ) {
             up = false;
             down = false;
             right = true;
         }
 
-        if ( (e.getKeyChar() == 'a' || e.getKeyCode() == KeyEvent.VK_LEFT ) && !right) {
+        if ( (e.getKeyChar() == 'a' || e.getKeyCode() == KeyEvent.VK_LEFT ) && !right && !pause ) {
             up = false;
             down = false;
             left = true;
         }
 
-        if ( (e.getKeyChar() == 'w' || e.getKeyCode() == KeyEvent.VK_UP ) && !down) {
+        if ( (e.getKeyChar() == 'w' || e.getKeyCode() == KeyEvent.VK_UP ) && !down && !pause ) {
             left = false;
             right = false;
             up = true;
         }
 
-        if ( (e.getKeyChar() == 's' || e.getKeyCode() == KeyEvent.VK_DOWN ) && !up) {
+        if ( (e.getKeyChar() == 's' || e.getKeyCode() == KeyEvent.VK_DOWN ) && !up && !pause ) {
             left = false;
             right = false;
             down = true;
+        }
+        
+        if( e.getKeyCode() == KeyEvent.VK_SPACE ){
+            pause = !pause;
         }
     }
     

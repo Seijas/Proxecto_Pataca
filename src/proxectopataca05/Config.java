@@ -22,6 +22,16 @@ public class Config {
     private String dificulty = "medium";
     private int intDificulty = 1;
 
+    private boolean running = true;
+
+    public boolean isRunning() {
+        return running;
+    }
+
+    public void setRunning(boolean running) {
+        this.running = running;
+    }
+    
     public int getIntDificulty() {
         return intDificulty;
     }
