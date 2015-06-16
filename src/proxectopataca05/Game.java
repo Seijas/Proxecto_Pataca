@@ -184,7 +184,7 @@ public class Game extends JPanel implements KeyListener, Runnable {
             try{
                 thread.sleep(speed);
                 while(pause && data.isRunning()){
-                    thread.sleep(10);
+                    thread.sleep(speed-1);
                 }
             }catch(InterruptedException e){
                 
